@@ -1,0 +1,26 @@
+(declare-fun z () Bool)
+(declare-fun y () Bool)
+(declare-fun b () Bool)
+(declare-fun d () Bool)
+(declare-fun c () Bool)
+(declare-fun a () Bool)
+
+;(push 1)
+(assert (let ((b (not d)) (a (+ a c))) (+ b y) ) ) 
+
+;(check-sat)
+;(pop 1) ;derp
+;(assert (= d c))
+;(assert (and (or a c) (or a b) ))
+
+;(assert (and  (or (- a b) (+ c d) a) (or (+ a b) (- c d) a) ))
+;(assert (< a b))
+;((x15 (- x14 (* 16 x9))) (x16 (* 4 x3)))
+;(assert (and (or (+ c) b c) (or (+ a) b c)  ))
+;(assert (and (+ 5) (+ 6)))
+;(push 1)
+;(assert (or y z (not d)))
+;(check-sat)
+;(pop 1)
+;(check-sat)
+;(exit)

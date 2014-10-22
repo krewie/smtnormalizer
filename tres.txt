@@ -1,0 +1,31 @@
+--- t1.txt	2014-10-16 11:40:58.000000000 +0200
++++ t2.txt	2014-10-16 11:41:00.000000000 +0200
+@@ -21,12 +21,12 @@
+ y : x2
+ 1
+ 1
++(declare-fun x6 () Bool)
++(declare-fun x5 () Bool)
++(declare-fun x3 () Bool)
+ (declare-fun x4 () Bool)
+ (declare-fun x2 () Bool)
+-(declare-fun x3 () Bool)
+ (declare-fun x1 () Bool)
+-(declare-fun x5 () Bool)
+-(declare-fun x6 () Bool)
+ (push 1)
+ (assert (let ((x7 (not x4))) (+ x2 x7)))
+ (check-sat)
+@@ -37,10 +37,10 @@
+ 1
+ 1
+ (pop 1)
++(assert (and 4 45 (or x1 x2) 67.123 (or 3 x4) x1 x2 x4 x5 x6 x7))
+ (assert (xor x4 x5))
+-(assert (and 4 (or 3 x4) 45 67.123 x1 x2 x4 x5 x6 (or x1 x2) x7))
+ (push 1)
+-(assert (and (not x4) x1 x2))
++(assert (and x1 x2 (not x4)))
+ (check-sat)
+ (pop 1)
+ (check-sat)
