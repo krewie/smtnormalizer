@@ -40,6 +40,10 @@
 #include <ctype.h>
 #include <sstream>
 #include <cmath>
+#include <queue>
+#include <stdexcept>
+
+
 
 namespace scrambler {
 
@@ -50,15 +54,18 @@ bool scramble_named_annot = false;
 bool lift_named_annot = false;
 bool debug = false;
 
+typedef std::tr1::unordered_map<std::string, size_t> NameMap_temp;
 typedef std::tr1::unordered_map<std::string, std::string> NameMap;
 NameMap names;
+
+NameMap var_map;
 
 int name_idx = 1;
 
 std::string make_name(int n)
 {
     std::ostringstream tmp;
-    tmp << "x" << n;
+    tmp << "v" << n;
     return tmp.str();
 }
 
@@ -87,7 +94,6 @@ const char *unquote(const char *n)
     }
     return buf.c_str();
 }
-
 
 size_t next_rand_int(size_t upper_bound)
 {
@@ -128,11 +134,22 @@ bool logic_is_dl()
 void set_new_name(const char *n)
 {
     n = unquote(n);
-    if (no_scramble) {
-        names[n] = n;
+    std::string star = "?";
+    std::string c = star + n;
+
+    //if (no_scramble) {
+        names[n] = c.c_str();
+    /*
     } else {
-        names[n] = make_name(name_idx++);
+        names[n] = make_name(name_idx++); //name_idx++
     }
+    */
+}
+
+void set_new_var(const char *n)
+{
+    n = unquote(n);
+    names[n] = make_name(name_idx++);
 }
 
 
@@ -170,7 +187,6 @@ void add_node(const char *s, node *n1, node *n2, node *n3, node *n4)
     if (n4) {
         ret->children.push_back(n4);
     }
-
     commands.push_back(ret);
 }
 
@@ -236,26 +252,16 @@ void set_seed(int s)
     seed = s;
 }
 
-double convert2Double(std::string str)
+const char first(std::string s1)
 {
-    double value;
-    try
+    if(!s1.empty())
     {
-        std::stringstream ss(str);
-
-        if ((ss >> value).fail() || !(ss >> std::ws).eof())
-        {
-            return -1;
-        }else
-        {
-            return value;
-        }
+        return s1.at(0);
     }
-    catch(...)
+    else
     {
-    
+        return *"";
     }
-
 }
 
 void sort_priority_list(std::vector<node *> *v, size_t start, size_t end)
@@ -268,37 +274,80 @@ void sort_priority_list(std::vector<node *> *v, size_t start, size_t end)
             {
                 if(strcmp((*v)[i]->symbol.c_str(), (*v)[j]->symbol.c_str()) > 0)
                 {
+                    
+                    if( first((*v)[i]->symbol) != '?' || first((*v)[j]->symbol) != '?' )
+                    {
                     std::swap( (*v)[i], (*v)[j] );
+                    }
                 }
             }
         }
     }
 }
 
-int cmp_arg(std::vector<node *> *v1, std::vector<node *> *v2)
-{
-    size_t diff1 = 0, diff2 = 0, ret_val;
 
-    for(size_t i = 0; i < (*v1).size(); i++)
+size_t cmp_arg_val(NameMap_temp *m, std::vector<node *> *v)
+{
+    size_t nr_of_arg = 0;
+    for(size_t i = 0; i < (*v).size(); i++)
     {
-        if(strcmp( (*v1)[i]->symbol.c_str(), (*v2)[i]->symbol.c_str()) < 0)
+        if((*v)[i]->symbol.empty())
         {
-            return 1;
-        }
-        else if(strcmp( (*v1)[i]->symbol.c_str(), (*v2)[i]->symbol.c_str()) > 0)
+            nr_of_arg += cmp_arg_val(m, &(*v)[i]->children);
+        }else
         {
-            return 3;
-        }else if( (*v1)[i]->needs_parens == 1 & (*v2)[i]->needs_parens == 1)
-        {
-            ret_val = cmp_arg(&(*v1)[i]->children, &(*v2)[i]->children);
-            if(ret_val < 2)
+            if(first((*v)[i]->symbol) == '?')
             {
-                return 1;
-            }else if(ret_val > 2)
-            {
-                return 3;
+                if ( (*m).find((*v)[i]->symbol.c_str()) == (*m).end() ) {
+                  (*m)[(*v)[i]->symbol.c_str()] = 1;
+                } else {
+                  (*m)[(*v)[i]->symbol.c_str()] += 1;
+                }
+                nr_of_arg++;
             }
         }
+    }
+    return nr_of_arg;
+}
+
+
+int cmp_arg(std::vector<node *> *v1, std::vector<node *> *v2)
+{
+    size_t ret_val;
+    if( (*v2).size() > (*v1).size() )
+    {
+        return 1;
+    }else if( (*v1).size() == (*v2).size())
+    {
+        for(size_t i = 0; i < (*v1).size(); i++)
+        {
+            if( (*v1)[i]->symbol.empty() & (*v2)[i]->symbol.empty() )
+            {
+                ret_val = cmp_arg(&(*v1)[i]->children, &(*v2)[i]->children);
+                if(ret_val < 2)
+                {
+                    return 1;
+                }else if(ret_val > 2)
+                {
+                    return 3;
+                }
+            }
+            else if(strcmp( (*v1)[i]->symbol.c_str(), (*v2)[i]->symbol.c_str()) > 0)
+            {
+                if( first((*v1)[i]->symbol) != '?' || first((*v2)[i]->symbol) != '?' )
+                {
+                    return 1;
+                }
+            }
+            else if(strcmp( (*v1)[i]->symbol.c_str(), (*v2)[i]->symbol.c_str()) < 0)
+            {
+                if( first((*v1)[i]->symbol) != '?' || first((*v2)[i]->symbol) != '?' )
+                {
+                    return 3;
+                }
+            }
+        }
+        return 2;
     }
 }
 
@@ -337,18 +386,90 @@ void order_parens(std::vector<node *> *v, size_t start, size_t end)
             }
         }
     }
-}  
+}
+
+bool map_compare (NameMap const &lhs, NameMap const &rhs) {
+    // No predicate needed because there is operator== for pairs already.
+    return lhs.size() == rhs.size()
+        && std::equal(lhs.begin(), lhs.end(),
+                      rhs.begin());
+}
+
+void sort_by_occurance(std::vector<node *> *v, size_t start, size_t end)
+{
+    NameMap_temp map1, map2;
+    size_t len1, len2, occur1, occur2;
+    for (size_t i = start; i <= end-1; i++) {
+        for(size_t j = i+1; j <= end; j++) {
+            if(cmp_arg(&(*v)[i]->children, &(*v)[j]->children) == 2)
+            {        
+                len1 = cmp_arg_val(&map1, &(*v)[i]->children);
+                len2 = cmp_arg_val(&map2, &(*v)[j]->children);
+                occur1 = map1.size();
+                occur2 = map2.size();
+                if(occur1 != occur2 && len1 == len2)
+                {
+                    if(occur2 < occur1)
+                    {
+                        std::swap( (*v)[i], (*v)[j] );
+                        //std::cout << "swap i : " << i << " j : " << j << "\n";
+                    }
+                }
+                map1.clear();
+                map2.clear();
+
+            }
+        }
+    }
+} 
+
 void sort_asserts_and_def(std::vector<node *> *v, size_t start, size_t end)
 {
-    for (size_t i = 0; i < (*v).size(); i++) {
-        for (size_t j = i+1; j < (*v).size()-1; j++) {
+    /* Sort so that lets / forall / exists are partitioned within the vector*/
+    for (size_t i = start; i < end; i++) {
+        for (size_t j = i+1; j < end; j++) {
             if(cmp_arg(&(*v)[i]->children, &(*v)[j]->children) == 1)
             {
                 std::swap( (*v)[i], (*v)[j] );
             }
         }
     }
+    
+    for (size_t i = start; i < end; i++) {
+        for (size_t j = i+1; j < end; j++) {
+            if( (*v)[i]->children[0]->symbol == "let" and (*v)[j]->children[0]->symbol == "let")
+            {
+                if(cmp_arg(&(*v)[i]->children[0]->children[0]->children, &(*v)[j]->children[0]->children[0]->children) == 1)
+                {
+                    std::swap( (*v)[i], (*v)[j] );
+                }
+                else if(cmp_arg(&(*v)[i]->children[0]->children[0]->children, &(*v)[j]->children[0]->children[0]->children) == 2)
+                {
+                    if(cmp_arg(&(*v)[i]->children[0]->children[1]->children, &(*v)[j]->children[0]->children[1]->children) == 1)
+                    {
+                        std::swap( (*v)[i], (*v)[j] );
+                    }
+                }
+            }
+        }
+    }
+    sort_by_occurance(v, start, end);
+    
 }
+        
+void sort_binds(std::vector<node *> *v)
+{
+    for (size_t i = 0; i < (*v).size(); i++) {
+        for (size_t j = i+1; j < (*v).size(); j++) {
+            if( cmp_arg(&(*v)[i]->children[0]->children, &(*v)[j]->children[0]->children) == 1 )
+            {
+                std::swap( (*v)[i], (*v)[j] );
+            }
+        }
+    }
+}
+
+
 /* Actually sort list */
 void shuffle_list(std::vector<node *> *v, size_t start, size_t end)
 {
@@ -362,7 +483,7 @@ void print_list(std::vector<node *> *v)
 {
     for(std::vector<node *>::const_iterator it = v->begin(); it != v->end(); ++it)
     {
-        std::cout << "Symbol : " << (*it)->symbol << " Need parens: " << (*it)->needs_parens << "\n";
+        std::cout << "Symbol : " << (*it)->symbol << " Need parens: " << "\n";
         if( ((*it)->children).size() != 0)
             print_list( &((*it)->children) );
         std::cout << "===\n";
@@ -415,22 +536,10 @@ bool flip_antisymm(node *n, node **out_n)
             *out_n = make_node(">");
             return true;
         } 
-        /*
-        else if (s == ">") {
-            *out_n = make_node("<");
-            return true;
-        } 
-        */
         else if (s == "<=") {
             *out_n = make_node(">=");
             return true;
         } 
-        /*
-        else if (s == ">=") {
-            *out_n = make_node("<=");
-            return true;
-        } 
-        */
         else if (s == "bvslt") {
             *out_n = make_node("bvsgt");
             return true;
@@ -444,27 +553,6 @@ bool flip_antisymm(node *n, node **out_n)
             *out_n = make_node("bvuge");
             return true;
         } 
-        /*
-        else if (s == "bvsgt") {
-            *out_n = make_node("bvslt");
-            return true;
-        } 
-        */
-        /*
-        else if (s == "bvsge") {
-            *out_n = make_node("bvsle");
-            return true;
-        } 
-        */
-        /*
-        else if (s == "bvugt") {
-            *out_n = make_node("bvult");
-            return true;
-        } else if (s == "bvuge") {
-            *out_n = make_node("bvule");
-            return true;
-        }
-        */
     }
     return false;
 }
@@ -586,7 +674,19 @@ void print_node(std::ostream &out, node *n, bool keep_annontations)
             out << '(';
         }
         if (!n->symbol.empty()) {
+            if(keep_annontations)
+            {
             out << n->symbol;
+            }
+            else{
+            if( first(n->symbol) == '?' )
+            {
+                out << n->symbol;
+            }else
+            {
+                out << n->symbol;
+            }
+        }
         }
         if (!name.empty()) {
             out << " (!";
@@ -612,12 +712,187 @@ void print_node(std::ostream &out, node *n, bool keep_annontations)
     }
 }
 
+void node_vars(node *n, NameMap *q, size_t &counter)
+{
+    if (!n->symbol.empty()) {
+        if( first(n->symbol) == '?' )
+        {
+            counter++;
+            if ( (*q).find(make_name(counter)) == (*q).end() ) {
+                (*q)[make_name(counter)] = n->symbol;
+            }
+        }
+    }
+    for (size_t i = 0; i < n->children.size(); ++i) {
+                node_vars(n->children[i], q, counter);
+    }
+}
+
+size_t factorial(int n)
+{
+  return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
+}
+
+void fill_varq_n(node *n, std::queue<std::string> &q)
+{
+    if (!n->symbol.empty()) {
+        if( first(n->symbol) == '?' )
+        {
+            q.push(n->symbol);
+        }
+    }
+    for(int i = 0; i < n->children.size(); i++)
+    {
+        fill_varq_n( n->children[i], q );
+    }
+}
+
+void fill_varq(std::vector<node *> *cmds, std::queue<std::string> &q, size_t start, size_t end)
+{
+    for(int i = start; i < end; i++)
+    {
+        fill_varq_n((*cmds)[i], q);
+    }
+}
+
+void node_rename(node *n, NameMap *q, size_t &counter)
+{
+    if (!n->symbol.empty()) {
+        if( first(n->symbol) == '?' )
+        {
+            if((*q)[n->symbol].compare("_") == 0)
+            {
+                (*q)[n->symbol] = make_name(counter++);
+            }
+        }
+    }
+    for (size_t i = 0; i < n->children.size(); ++i) {
+                node_rename(n->children[i], q, counter);
+    }
+}
+
+size_t node_count_fac(node *n)
+{
+    size_t fac = 0;
+    if(n->permutes == true)
+    {
+        fac += n->permutations;
+    }
+    for (size_t i = 0; i < n->children.size(); i++) {
+        fac += node_count_fac(n->children[i]);
+    }
+    return fac;
+}
+
+
+void reset_children(node *n)
+{
+    if(n->children.size() > 1)
+    {
+        n->permutes = true;
+        n->perm_rounds = factorial(n->children.size()-1);
+        n->finished = false;
+    }
+    for (size_t i = 0; i < n->children.size(); ++i) {
+                reset_children(n->children[i]);
+    }
+}
+
+/*Permute elements in */
+/*skip denotes how many of the first elements that should not permute*/
+void permute(std::vector<node *> *children, int k, int skip){
+    int i;
+
+    if (k==0)
+        ;
+    else{
+        for (i=k-1;i>=skip;i--){
+            std::swap( (*children)[i],(*children)[k-1]);
+            permute(children, k-1, skip);
+        }
+    }
+}
+
+int permute_statement(node *n)
+{
+    int ret_val = 0;
+    for(int i = 0; i < n->children.size(); i++)
+    {
+        if(n->children[i]->children.size() > 0)
+        {
+            ret_val = permute_statement( n->children[i] );
+            if( ret_val == 1)
+            {
+                return 1;
+            }else if( ret_val == 2)
+            {
+                reset_children(n->children[i]);
+            }
+        }
+    }
+    if(n->permutes == 1 && n->finished != 1)
+    {
+        //std::cout << "här : " << n->children[0]->symbol << "\n";
+        permute(&n->children, n->children.size(), 1);
+        n->perm_rounds -= 1;
+        if(n->perm_rounds == 0)
+        {
+            n->finished = true;
+        }
+        if(n->finished == true)
+        {
+            return 2;
+        }else{
+            return 1;
+        }
+    }
+}
 
 void print_command(std::ostream &out, node *n, bool keep_annontations)
 {
     print_node(out, n, keep_annontations);
     out << std::endl;
 }
+
+
+void permute_script_acc(std::vector<node *> *stmts,size_t &st_index, size_t &p)
+{
+    size_t perm = node_count_fac((*stmts)[st_index]);
+    std::cout << "p : " << p << "\n";
+    std::cout << "perm : " << perm << "\n";
+    std::cout << "index : " << st_index << "\n";
+    if(p < perm)
+    {
+        permute_statement((*stmts)[st_index]);
+        p++;
+        std::cout << perm << "\n";
+        if(p == perm)
+        {
+            st_index--;
+            p = 1;
+        }
+    }
+}
+
+/*
+
+void permute_script(std::vector<node *> *stmts,size_t start, size_t end)
+{
+    for(size_t j = 0; j < end-start; j++)
+    {
+        std::cout << j << "\n";
+        for(size_t i = end-1; i >= start; i--)
+        {
+            std::cout << "FOR I : " << i << "-----\n";
+            permute_script_acc(stmts, i, start);
+            std::cout << "RESET: ---- \n";
+            permute_script_acc(stmts, i, start);
+            std::cout << "------\n";
+        }
+    permute(stmts, end, 3); //Ändra 3 här; supposed to skip the first def statements
+    }
+}
+*/
 
 std::tr1::unordered_map<std::string, int> sort_priorities;
 void init_sort_priorities()
@@ -656,12 +931,346 @@ void sort_command_list()
         std::stable_sort(commands.begin(), commands.end(), commands_lt);
     }
 }
+/*
+size_t init_calc(std::vector<node *> *commands, std::vector<node *> *cmds, NameMap *partial_map, size_t start, size_t end)
+{
+    size_t counter = 0;
 
+    //1. Replace variables by _ 
+    for(size_t i = start; i < end; i++)
+    {
+        for(size_t j = 0; j < (*cmds)[i]->children.size(); j++)
+        {
+            node_mute((*cmds)[i]->children[j], partial_map);
+        }
+    }
+
+    //Calculate variables
+    for(size_t i = start; i < end; i++)
+    {
+        for(size_t j = 0; j < (*cmds)[i]->children.size(); j++)
+        {
+            node_rename((*cmds)[i]->children[j], partial_map, counter);
+        }
+    }
+}
+
+void compute_variables(std::vector<node *> &commands, size_t start, size_t end)
+{
+    size_t p = 1;
+    std::queue<std::string> q1; //fifo queue for vars
+    std::queue<std::string> q2;
+    std::vector<node *> *minimal;
+    std::vector<node *> cmds(commands);
+    NameMap partial_map;
+
+    //Call after every permutation of rows / assertions 
+    init_calc(&commands, &cmds, &partial_map, start, end);
+    fill_varq(&cmds, q1, start, end);
+
+    size_t index = end-1;
+    std::cout << "---\n";
+    for (size_t l = 0; l < (cmds).size(); ++l) 
+    {
+    print_command(std::cout, (cmds)[l], false);
+    }
+    
+    permute_script_acc(&cmds, index, p);
+    
+    for (size_t l = 0; l < (cmds).size(); ++l) 
+    {
+    print_command(std::cout, (cmds)[l], false);
+    }
+    std::cout << "---\n";
+
+    fill_varq(&cmds, q2, start, end);
+
+    while (!q1.empty())
+    {
+        std::cout << ' ' << q1.front();
+        q1.pop();
+    }
+    std::cout << "\n";
+    while (!q2.empty())
+    {
+        std::cout << ' ' << q2.front();
+        q2.pop();
+    }
+
+    //permute_script(commands, start, end);
+
+/* 2. Sort assertions and arguments by commutative operator : already done */
+/* 3. Depth-first search + extend partial map + re-sort assertions */
+    /*
+    for(size_t i = end-1; i >= start; i--)
+    {
+    std::cout << i << "\n";
+    permute_statement((*commands)[i]);
+    std::cout << "out" << "\n";
+    }
+    
+
+}
+*/
+
+void node_mute(node *n, NameMap *q)
+{
+    if (!n->symbol.empty()) {
+        if( first(n->symbol) == '?' )
+        {
+            (*q)[n->symbol] = '_';
+        }
+    }
+    /*
+    if(n->children.size() > 1)
+    {
+        n->permutes = true;
+        n->perm_rounds = factorial(n->children.size()-1);
+        n->permutations = n->perm_rounds;
+    }
+    */
+    for (size_t i = 0; i < n->children.size(); ++i) {
+        node_mute(n->children[i], q);
+    }
+}
+
+void extend(NameMap *v, node *n)
+{
+    size_t counter;
+    counter = stoi((*v)["max-key"]);
+    if (!n->symbol.empty()) {
+        if( first(n->symbol) == '?' )
+        {
+            if((*v)[n->symbol].compare("_") == 0)
+            {
+                if ( (*v).find((*v)[n->symbol]) == (*v).end() ) {
+                    (*v)[n->symbol] = make_name(counter++);
+                    //update max-key value
+                    if( (*v).find("max-key") == (*v).end() || stoi((*v)["max-key"]) < counter )
+                    {
+                        (*v)["max-key"] = std::to_string(counter);
+                    }
+                }
+            }
+        }
+    }
+    for (size_t i = 0; i < n->children.size(); ++i) {
+                extend(v, n->children[i]);
+    }
+}
+
+void init_map(std::vector<node *> *cmds, NameMap *v)
+{
+    for ( auto &val : *cmds) 
+    {
+        if(val->symbol == "assert")
+        {
+            for(size_t j = 0; j < val->children.size(); j++)
+            {
+                node_mute(val->children[j], v);
+            }
+        }
+    }
+    (*v)["max-key"] = "0";
+}
+
+std::string cmd_string(NameMap *v, node *n, bool keep_annontations)
+{
+    std::string out = "";
+    if (!no_scramble && !keep_annontations && n->symbol == "!") {
+        out += cmd_string(v, n->children[0], keep_annontations);
+    } else {
+        std::string name;
+        if (lift_named_annot && keep_annontations) {
+            node *annot = NULL;
+            if (n->symbol == "assert") {
+                name = get_named_annot(n);
+                if (!name.empty()) {
+                    if (scramble_named_annot) {
+                        NameMap::iterator it = names.find(name);
+                        if (it != names.end()) {
+                            name = it->second;
+                        } else {
+                            std::string nn = make_annot_name(name_idx++);
+                            names[name] = nn;
+                            name = nn;
+                        }
+                    }
+                }
+            } else if (is_named_annot(n, &annot)) {
+                if (n->children.size() == 2) {
+                    n = n->children[0];
+                } else {
+                    n->children.erase(
+                        std::find(n->children.begin(), n->children.end(),
+                                  annot));
+                    del_node(annot);
+                }
+            }
+        }
+        if (n->needs_parens) {
+            out += '(';
+        }
+        if (!n->symbol.empty()) {
+            if(keep_annontations)
+            {
+            out += n->symbol;
+            }
+            else{
+            if( first(n->symbol) == '?' )
+            {
+                out += (*v)[n->symbol];
+            }else
+            {
+                out += n->symbol;
+            }
+        }
+        }
+        if (!name.empty()) {
+            out += " (!";
+        }
+        if (scramble_named_annot && keep_annontations) {
+            node *annot;
+            if (is_named_annot(n, &annot)) {
+                set_named_annot(annot->children[0]);
+            }
+        }
+        for (size_t i = 0; i < n->children.size(); ++i) {
+            if (i > 0 || !n->symbol.empty()) {
+                out += ' ';
+            }
+            out += cmd_string(v, n->children[i], keep_annontations);
+        }
+        if (!name.empty()) {
+            out += " :named " + name + ")";
+        }
+        if (n->needs_parens) {
+            out += ')';
+        }
+    }
+    return out;
+}
+
+/*
+return 1 : if partial > best
+return 0 : if partial == best
+return -1: if partial < best
+*/
+/*
+int statement_comp(std::string partial, std::string best, size_t row, size_t &counter)
+{
+    if(best.empty())
+    {
+        return 1;
+    }
+    else
+    {
+        if((partial.find(make_name(counter)) != std::string::npos) && (best.find(make_name(counter)) != std::string::npos))
+    }
+}
+*/
+
+std::string filter(std::string s1, size_t start)
+{
+  std::string vars = "";
+  std::size_t pos1 = s1.find("v", start);
+  if(pos1 != std::string::npos)
+  {
+    vars += s1.substr(pos1, 2);
+    vars += filter(s1, pos1+2);
+  }
+  return vars;
+}
+
+std::vector<node *> delnode(std::vector<node *> v, node* index)
+{
+    std::vector<node *> new_(v);
+    new_.erase(std::remove(new_.begin(), new_.end(), index), new_.end());
+    return new_;
+}
+
+NameMap cpyMap(NameMap V)
+{
+    NameMap copy_;
+    copy_.insert(V.begin(), V.end());
+    return copy_;
+}
+
+void rollback_map(NameMap *v, std::string prev_max_key)
+{
+    typedef NameMap::iterator it_type;
+    for(it_type iterator = (*v).begin(); iterator != (*v).end(); iterator++) 
+    {
+        if(iterator->second.compare(std::string("v")+prev_max_key) >= 0)
+        {
+            iterator->second = "_";
+        }
+    }
+    (*v)["max-key"] = prev_max_key;
+}
+
+void normalize_aux(NameMap v, NameMap *best_map, std::string &best, std::string &partial, std::vector<node *> cmds)
+{
+    std::string prev_max_key, prev_partial;
+    //For every command in cmds vector
+    for ( auto &val : cmds) {
+        if(val->symbol == "assert")
+        {
+            prev_max_key = v["max-key"];
+            prev_partial = partial;
+            extend(&v, val->children[0]);
+            partial += (cmd_string(&v, val, false) + "\n");
+            if( (!best.empty()) &&  (filter(partial, 0) > filter(best, 0)) )
+            {
+                partial = prev_partial;
+                rollback_map(&v, prev_max_key);
+                continue;
+            }
+            if(cmds.size() == 1)
+            {
+                best = partial;
+                (*best_map).insert(v.begin(), v.end());
+            }
+            else
+            {
+                normalize_aux(cpyMap(v), best_map, best, partial, delnode((cmds), val));
+                partial = prev_partial;
+                rollback_map(&v, prev_max_key);
+            }
+        }
+    }
+}
+
+void normalize(std::vector<node *> *cmds, size_t assert_count)
+{
+    NameMap v, v_best;
+    //best should be a vector
+    std::string best = "", partial = "";
+    init_map(cmds, &v);
+
+    normalize_aux(v, &v_best, best, partial, *cmds);
+    std::cout << "\nBEST MAP\n";
+    for(NameMap::const_iterator it = (v_best).begin(); it != (v_best).end(); ++it)
+    {
+        std::cout << it->first << " " << it->second << "\n";
+    }
+    std::cout << "-----\n";
+
+    if(best.empty())
+    {
+        std::cout << "NO RESULT\n";
+    }else
+    {
+        std::cout << "RESULT : \n" << best << "\n";
+    }
+    //print_best / print script
+
+}
 
 void print_scrambled(std::ostream &out, bool keep_annotations)
 {
     sort_command_list();
-    
+    size_t assert_count = 0;
     // identify consecutive declarations and shuffle them
     for (size_t i = 0; i < commands.size(); ) {
         if (commands[i]->symbol == "declare-fun") {
@@ -689,12 +1298,32 @@ void print_scrambled(std::ostream &out, bool keep_annotations)
             }
             if (j - i > 1) {
                 sort_asserts_and_def(&commands, i, j);
+                assert_count += j-i;
+                /*
+                for(NameMap_temp::const_iterator it = t.begin(); it != t.end(); ++it)
+                {
+                    std::cout << it->first << " " << it->second << "\n";
+                }
+                */
+        
             }
             i = j;
         } else {
             ++i;
         }
     }    
+
+    //Destructive but temporary
+    for(size_t i = 0; i < commands.size(); i++){
+        if(commands[i]->symbol != "assert")
+        {
+            commands.erase(std::remove(commands.begin(), commands.end(), commands[i]), commands.end());
+        }
+    }
+    commands.erase(std::remove(commands.begin(), commands.end(), commands[0]), commands.end());
+
+    normalize(&commands, assert_count);
+
 
     for (size_t i = 0; i < commands.size(); ++i) {
         print_command(out, commands[i], keep_annotations);

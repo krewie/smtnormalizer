@@ -1,0 +1,10 @@
+(declare-fun x () Int)
+(declare-fun y () Bool)
+(declare-fun z () Double)
+
+(assert (and z x z))
+(assert (and y z y))
+(assert (and x z x z))
+(assert (+ z x))
+(assert (+ y x))
+(assert (and y x y x))

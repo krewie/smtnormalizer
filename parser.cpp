@@ -1654,7 +1654,7 @@ yyreduce:
   case 24:
 #line 182 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[-2].string));
+      set_new_name((yyvsp[-2].string));
       add_node("declare-sort", make_node((yyvsp[-2].string)), make_node((yyvsp[-1].string)));
       free((yyvsp[-1].string));
       free((yyvsp[-2].string));
@@ -1665,7 +1665,7 @@ yyreduce:
   case 25:
 #line 193 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[-4].string));
+      set_new_name((yyvsp[-4].string));
       add_node("define-sort", make_node((yyvsp[-4].string)), make_node(), (yyvsp[-1].curnode));
       free((yyvsp[-4].string));
   }
@@ -1675,7 +1675,7 @@ yyreduce:
   case 26:
 #line 199 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[-5].string));
+      set_new_name((yyvsp[-5].string));
       add_node("define-sort", make_node((yyvsp[-5].string)), make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       pop_namespace();
       free((yyvsp[-5].string));
@@ -1686,7 +1686,7 @@ yyreduce:
   case 27:
 #line 210 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[-4].string));
+      set_new_name((yyvsp[-4].string));
       add_node("declare-fun", make_node((yyvsp[-4].string)), make_node(), (yyvsp[-1].curnode));
       free((yyvsp[-4].string));
   }
@@ -1696,7 +1696,7 @@ yyreduce:
   case 28:
 #line 216 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[-5].string));
+      set_new_name((yyvsp[-5].string));
       add_node("declare-fun", make_node((yyvsp[-5].string)), make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       free((yyvsp[-5].string));
   }
@@ -1706,7 +1706,7 @@ yyreduce:
   case 29:
 #line 225 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[-5].string));
+      set_new_name((yyvsp[-5].string));
       add_node("define-fun", make_node((yyvsp[-5].string)), make_node(), (yyvsp[-2].curnode), (yyvsp[-1].curnode));
       free((yyvsp[-5].string));
   }
@@ -1716,7 +1716,7 @@ yyreduce:
   case 30:
 #line 231 "parser.y" /* yacc.c:1661  */
     {
-     // set_new_name((yyvsp[-6].string));
+      set_new_name((yyvsp[-6].string));
       add_node("define-fun", make_node((yyvsp[-6].string)), make_node((yyvsp[-4].nodelist)), (yyvsp[-2].curnode), (yyvsp[-1].curnode));
       free((yyvsp[-6].string));
   }
@@ -1935,6 +1935,7 @@ yyreduce:
 #line 411 "parser.y" /* yacc.c:1661  */
     {
       shuffle_list((yyvsp[-3].nodelist));
+      sort_binds((yyvsp[-3].nodelist));
       (yyval.curnode) = make_node("let", make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       delete (yyvsp[-3].nodelist);
       pop_namespace();
@@ -1946,6 +1947,7 @@ yyreduce:
 #line 418 "parser.y" /* yacc.c:1661  */
     {
       shuffle_list((yyvsp[-3].nodelist));
+      sort_binds((yyvsp[-3].nodelist));
       (yyval.curnode) = make_node("forall", make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       delete (yyvsp[-3].nodelist);
       pop_namespace();
@@ -1957,6 +1959,7 @@ yyreduce:
 #line 425 "parser.y" /* yacc.c:1661  */
     {
       shuffle_list((yyvsp[-3].nodelist));
+      sort_binds((yyvsp[-3].nodelist));
       (yyval.curnode) = make_node("exists", make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       delete (yyvsp[-3].nodelist);
       pop_namespace();
@@ -2212,7 +2215,7 @@ yyreduce:
     {
       push_namespace();
       (yyval.nodelist) = new std::vector<node *>();
-      //set_new_name((yyvsp[-2].string));
+      set_new_name((yyvsp[-2].string));
       (yyval.nodelist)->push_back(make_node((yyvsp[-2].string), (yyvsp[-1].curnode)));
       free((yyvsp[-2].string));
   }
@@ -2223,7 +2226,7 @@ yyreduce:
 #line 622 "parser.y" /* yacc.c:1661  */
     {
       (yyval.nodelist) = (yyvsp[-4].nodelist);
-      //set_new_name((yyvsp[-2].string));
+      set_new_name((yyvsp[-2].string));
       (yyval.nodelist)->push_back(make_node((yyvsp[-2].string), (yyvsp[-1].curnode)));
       free((yyvsp[-2].string));
   }
@@ -2259,7 +2262,7 @@ yyreduce:
   case 88:
 #line 653 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[-2].string));
+      set_new_name((yyvsp[-2].string));
       (yyval.curnode) = make_node((yyvsp[-2].string), (yyvsp[-1].curnode));
       free((yyvsp[-2].string));
   }
@@ -2360,7 +2363,7 @@ yyreduce:
   case 98:
 #line 733 "parser.y" /* yacc.c:1661  */
     {
-      //set_new_name((yyvsp[0].string));
+      set_new_name((yyvsp[0].string));
       (yyval.curnode) = make_node((yyvsp[0].string));
       free((yyvsp[0].string));
   }

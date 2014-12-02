@@ -35,13 +35,16 @@ namespace scrambler {
 struct node {
     std::string symbol;
     std::vector<node *> children;
-    bool needs_parens;
 
+    bool needs_parens;
+    bool finished;
+    bool permutes;
+    size_t perm_rounds;
+    size_t permutations;
     void add_children(std::vector<node *> *c);
 
     void set_parens_needed(bool b) { needs_parens = b; }
 };
-
 
 void set_new_name(const char *n);
 void push_namespace();
@@ -56,6 +59,7 @@ node *make_node(node *n, std::vector<node *> *v);
 void del_node(node *n);
 
 void set_seed(int n);
+void sort_binds(std::vector<node *> *v);
 void shuffle_list(std::vector<node *> *v);
 void print_list(std::vector<node *> *v); // my addition
 bool is_commutative(node *n);
