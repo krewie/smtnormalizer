@@ -531,7 +531,7 @@ static const char *const yytname[] =
   "term_unqualified_symbol", "term_num_constant", "term_attribute_list",
   "term_attribute", "generic_sexp", "generic_sexp_list", "num_list",
   "int_list", "term_list", "quant_var_list", "begin_let_scope",
-  "let_bindings", "let_binding", "logic_name", "shuffle_list", "a_sort",
+  "let_bindings", "let_binding", "logic_name", "order_parens", "a_sort",
   "sort_param_list", "a_sort_param", YY_NULLPTR
 };
 #endif
@@ -1333,7 +1333,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocatio
 #line 1334 "parser.cpp" /* yacc.c:1257  */
         break;
 
-    case 82: /* shuffle_list  */
+    case 82: /* order_parens  */
 #line 126 "parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep).nodelist); }
 #line 1340 "parser.cpp" /* yacc.c:1257  */
@@ -1934,8 +1934,7 @@ yyreduce:
   case 54:
 #line 411 "parser.y" /* yacc.c:1661  */
     {
-      shuffle_list((yyvsp[-3].nodelist));
-      sort_binds((yyvsp[-3].nodelist));
+      order_parens((yyvsp[-3].nodelist));
       (yyval.curnode) = make_node("let", make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       delete (yyvsp[-3].nodelist);
       pop_namespace();
@@ -1946,8 +1945,7 @@ yyreduce:
   case 55:
 #line 418 "parser.y" /* yacc.c:1661  */
     {
-      shuffle_list((yyvsp[-3].nodelist));
-      sort_binds((yyvsp[-3].nodelist));
+      order_parens((yyvsp[-3].nodelist));
       (yyval.curnode) = make_node("forall", make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       delete (yyvsp[-3].nodelist);
       pop_namespace();
@@ -1958,8 +1956,7 @@ yyreduce:
   case 56:
 #line 425 "parser.y" /* yacc.c:1661  */
     {
-      shuffle_list((yyvsp[-3].nodelist));
-      sort_binds((yyvsp[-3].nodelist));
+      order_parens((yyvsp[-3].nodelist));
       (yyval.curnode) = make_node("exists", make_node((yyvsp[-3].nodelist)), (yyvsp[-1].curnode));
       delete (yyvsp[-3].nodelist);
       pop_namespace();
@@ -1988,7 +1985,7 @@ yyreduce:
     {
       node *n = (yyvsp[-2].curnode);
       if (is_commutative((yyvsp[-2].curnode))) {
-          shuffle_list((yyvsp[-1].nodelist));
+          order_parens((yyvsp[-1].nodelist));
       } else if (flip_antisymm((yyvsp[-2].curnode), &n)) {
           std::swap((*((yyvsp[-1].nodelist)))[0], (*((yyvsp[-1].nodelist)))[1]);
       }

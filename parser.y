@@ -103,7 +103,7 @@ using namespace scrambler;
 %type <curnode> term_num_constant
 %type <nodelist> term_list
 
-%type <nodelist> shuffle_list
+%type <nodelist> order_parens
 %type <nodelist> sort_param_list
 %type <nodelist> quant_var_list
 %type <nodelist> let_bindings
@@ -123,7 +123,7 @@ using namespace scrambler;
 
 %destructor { delete $$; } logic_name
 %destructor { delete $$; } term_list
-%destructor { delete $$; } shuffle_list
+%destructor { delete $$; } order_parens
 %destructor { delete $$; } sort_param_list
 %destructor { delete $$; } quant_var_list
 %destructor { delete $$; } num_list int_list
@@ -212,7 +212,7 @@ cmd_declare_fun :
       add_node("declare-fun", make_node($3), make_node(), $6);
       free($3);
   }
-| '(' TK_DECLARE_FUN SYMBOL '(' shuffle_list ')' a_sort ')'
+| '(' TK_DECLARE_FUN SYMBOL '(' order_parens ')' a_sort ')'
   {
       set_new_name($3);
       add_node("declare-fun", make_node($3), make_node($5), $7);
@@ -409,21 +409,21 @@ annotated_term :
 plain_term :
  '(' begin_let_scope '(' let_bindings ')' a_term ')'
   {
-      shuffle_list($4);
+      order_parens($4);
       $$ = make_node("let", make_node($4), $6);
       delete $4;
       pop_namespace();
   }
 | '(' TK_FORALL '(' quant_var_list ')' a_term ')'
   {
-      shuffle_list($4);
+      order_parens($4);
       $$ = make_node("forall", make_node($4), $6);
       delete $4;
       pop_namespace();
   }
 | '(' TK_EXISTS '(' quant_var_list ')' a_term ')'
   {
-      shuffle_list($4);
+      order_parens($4);
       $$ = make_node("exists", make_node($4), $6);
       delete $4;
       pop_namespace();
@@ -440,7 +440,7 @@ plain_term :
   {
       node *n = $2;
       if (is_commutative($2)) {
-          shuffle_list($3);
+          order_parens($3);
       } else if (flip_antisymm($2, &n)) {
           std::swap((*($3))[0], (*($3))[1]);
       }
@@ -676,13 +676,13 @@ logic_name :
 ;
 
 
-shuffle_list :
+order_parens :
   a_sort
   {
       $$ = new std::vector<node *>();
       $$->push_back($1);
   }
-| shuffle_list a_sort
+| order_parens a_sort
   {
       $$ = $1;
       $$->push_back($2);
@@ -703,7 +703,7 @@ a_sort :
       delete $4;
       free($3);
   }
-| '(' SYMBOL shuffle_list ')'
+| '(' SYMBOL order_parens ')'
   {
       $$ = make_node($2);
       $$->add_children($3);

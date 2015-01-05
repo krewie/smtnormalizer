@@ -40,7 +40,7 @@ Grammar
    25                | '(' "define-sort" SYMBOL '(' sort_param_list ')' a_sort ')'
 
    26 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' ')' a_sort ')'
-   27                | '(' "declare-fun" SYMBOL '(' shuffle_list ')' a_sort ')'
+   27                | '(' "declare-fun" SYMBOL '(' order_parens ')' a_sort ')'
 
    28 cmd_define_fun: '(' "define-fun" SYMBOL '(' ')' a_sort a_term ')'
    29               | '(' "define-fun" SYMBOL '(' quant_var_list ')' a_sort a_term ')'
@@ -137,12 +137,12 @@ Grammar
    88 logic_name: SYMBOL
    89           | SYMBOL '[' NUMERAL ']'
 
-   90 shuffle_list: a_sort
-   91             | shuffle_list a_sort
+   90 order_parens: a_sort
+   91             | order_parens a_sort
 
    92 a_sort: SYMBOL
    93       | '(' "_" SYMBOL int_list ')'
-   94       | '(' SYMBOL shuffle_list ')'
+   94       | '(' SYMBOL order_parens ')'
 
    95 sort_param_list: a_sort_param
    96                | sort_param_list a_sort_param
@@ -282,7 +282,7 @@ let_binding (80)
     on left: 87, on right: 85 86
 logic_name (81)
     on left: 88 89, on right: 22
-shuffle_list (82)
+order_parens (82)
     on left: 90 91, on right: 27 91 94
 a_sort (83)
     on left: 92 93 94, on right: 24 25 26 27 28 29 60 82 83 90 91
@@ -330,7 +330,7 @@ State 1
    24 cmd_define_sort: '(' . "define-sort" SYMBOL '(' ')' a_sort ')'
    25                | '(' . "define-sort" SYMBOL '(' sort_param_list ')' a_sort ')'
    26 cmd_declare_fun: '(' . "declare-fun" SYMBOL '(' ')' a_sort ')'
-   27                | '(' . "declare-fun" SYMBOL '(' shuffle_list ')' a_sort ')'
+   27                | '(' . "declare-fun" SYMBOL '(' order_parens ')' a_sort ')'
    28 cmd_define_fun: '(' . "define-fun" SYMBOL '(' ')' a_sort a_term ')'
    29               | '(' . "define-fun" SYMBOL '(' quant_var_list ')' a_sort a_term ')'
    30 cmd_push: '(' . "push" NUMERAL ')'
@@ -544,7 +544,7 @@ State 25
 State 26
 
    26 cmd_declare_fun: '(' "declare-fun" . SYMBOL '(' ')' a_sort ')'
-   27                | '(' "declare-fun" . SYMBOL '(' shuffle_list ')' a_sort ')'
+   27                | '(' "declare-fun" . SYMBOL '(' order_parens ')' a_sort ')'
 
     SYMBOL  shift, and go to state 46
 
@@ -705,7 +705,7 @@ State 45
 State 46
 
    26 cmd_declare_fun: '(' "declare-fun" SYMBOL . '(' ')' a_sort ')'
-   27                | '(' "declare-fun" SYMBOL . '(' shuffle_list ')' a_sort ')'
+   27                | '(' "declare-fun" SYMBOL . '(' order_parens ')' a_sort ')'
 
     '('  shift, and go to state 76
 
@@ -964,13 +964,13 @@ State 75
 State 76
 
    26 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' . ')' a_sort ')'
-   27                | '(' "declare-fun" SYMBOL '(' . shuffle_list ')' a_sort ')'
+   27                | '(' "declare-fun" SYMBOL '(' . order_parens ')' a_sort ')'
 
     SYMBOL  shift, and go to state 108
     '('     shift, and go to state 109
     ')'     shift, and go to state 110
 
-    shuffle_list  go to state 111
+    order_parens  go to state 111
     a_sort        go to state 112
 
 
@@ -1258,7 +1258,7 @@ State 108
 State 109
 
    93 a_sort: '(' . "_" SYMBOL int_list ')'
-   94       | '(' . SYMBOL shuffle_list ')'
+   94       | '(' . SYMBOL order_parens ')'
 
     SYMBOL  shift, and go to state 137
     "_"     shift, and go to state 138
@@ -1276,8 +1276,8 @@ State 110
 
 State 111
 
-   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' shuffle_list . ')' a_sort ')'
-   91 shuffle_list: shuffle_list . a_sort
+   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' order_parens . ')' a_sort ')'
+   91 order_parens: order_parens . a_sort
 
     SYMBOL  shift, and go to state 108
     '('     shift, and go to state 109
@@ -1288,9 +1288,9 @@ State 111
 
 State 112
 
-   90 shuffle_list: a_sort .
+   90 order_parens: a_sort .
 
-    $default  reduce using rule 90 (shuffle_list)
+    $default  reduce using rule 90 (order_parens)
 
 
 State 113
@@ -1500,12 +1500,12 @@ State 136
 
 State 137
 
-   94 a_sort: '(' SYMBOL . shuffle_list ')'
+   94 a_sort: '(' SYMBOL . order_parens ')'
 
     SYMBOL  shift, and go to state 108
     '('     shift, and go to state 109
 
-    shuffle_list  go to state 162
+    order_parens  go to state 162
     a_sort        go to state 112
 
 
@@ -1525,7 +1525,7 @@ State 139
 
 State 140
 
-   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' shuffle_list ')' . a_sort ')'
+   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' order_parens ')' . a_sort ')'
 
     SYMBOL  shift, and go to state 108
     '('     shift, and go to state 109
@@ -1535,9 +1535,9 @@ State 140
 
 State 141
 
-   91 shuffle_list: shuffle_list a_sort .
+   91 order_parens: order_parens a_sort .
 
-    $default  reduce using rule 91 (shuffle_list)
+    $default  reduce using rule 91 (order_parens)
 
 
 State 142
@@ -1721,8 +1721,8 @@ State 161
 
 State 162
 
-   91 shuffle_list: shuffle_list . a_sort
-   94 a_sort: '(' SYMBOL shuffle_list . ')'
+   91 order_parens: order_parens . a_sort
+   94 a_sort: '(' SYMBOL order_parens . ')'
 
     SYMBOL  shift, and go to state 108
     '('     shift, and go to state 109
@@ -1749,7 +1749,7 @@ State 164
 
 State 165
 
-   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' shuffle_list ')' a_sort . ')'
+   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' order_parens ')' a_sort . ')'
 
     ')'  shift, and go to state 188
 
@@ -1962,7 +1962,7 @@ State 184
 
 State 185
 
-   94 a_sort: '(' SYMBOL shuffle_list ')' .
+   94 a_sort: '(' SYMBOL order_parens ')' .
 
     $default  reduce using rule 94 (a_sort)
 
@@ -1985,7 +1985,7 @@ State 187
 
 State 188
 
-   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' shuffle_list ')' a_sort ')' .
+   27 cmd_declare_fun: '(' "declare-fun" SYMBOL '(' order_parens ')' a_sort ')' .
 
     $default  reduce using rule 27 (cmd_declare_fun)
 

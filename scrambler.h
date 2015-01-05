@@ -37,10 +37,6 @@ struct node {
     std::vector<node *> children;
 
     bool needs_parens;
-    bool finished;
-    bool permutes;
-    size_t perm_rounds;
-    size_t permutations;
     void add_children(std::vector<node *> *c);
 
     void set_parens_needed(bool b) { needs_parens = b; }
@@ -60,7 +56,7 @@ void del_node(node *n);
 
 void set_seed(int n);
 void sort_binds(std::vector<node *> *v);
-void shuffle_list(std::vector<node *> *v);
+void order_parens(std::vector<node *> *v);
 void print_list(std::vector<node *> *v); // my addition
 bool is_commutative(node *n);
 bool flip_antisymm(node *n, node **out_n);

@@ -9,6 +9,8 @@
 (declare-fun f1 () Bool)
 (declare-fun z () Bool)
 (declare-fun y () Bool)
+(declare-fun x () Bool)
+
 (push 1)
 (assert (and a))
 (assert (and b))
@@ -49,7 +51,7 @@
 (assert ( forall ((x Int)) (> (p x) 0) ))
 (assert (+ E0 c0 f0))
 (assert (+ f0 E0 f1))
-(assert (and c0 E0 c0 E0))
+(assert (and a b a b))
 (assert ( forall ((x Int)) (> (p x) 0) ))
 (check-sat)
 (pop 1)

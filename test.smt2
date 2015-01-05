@@ -7,6 +7,5 @@
 (assert (or y z))
 (assert (and x z))
 (assert (and y z))
-
-(check-sat)
-(exit)
+ (check-sat)
+ (exit)
