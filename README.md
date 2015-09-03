@@ -12,6 +12,7 @@ purpose of this project was to develop a computer program that is able to normal
 benchmark scripts to a standard defined format such that by scrambling syntactically
 equal scripts would result in the same result when normalized. 
 The implementation that
+
 was conceived is incomplete and inefficient for larger SMT scripts in terms of 
 computational complexity due to time constraints. The implementation that was conceived is
 incomplete and inefficient for larger SMT scripts in terms of computational complexity
