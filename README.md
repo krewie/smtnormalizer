@@ -1,4 +1,7 @@
 #SMT normalizer
+
+Link to my [thesis paper](http://www.diva-portal.org/smash/get/diva2:895083/FULLTEXT01.pdf)
+
 Satisfiability modulo theories (SMT) is about determining the satisfiability of logical formulas over a range of one or more theories. SMT solvers are programs that are designed
 to determine the satisfiability of logical formulas and to and a satisfying model. Since the
 SMT problem is known to be NP-complete, the SMT initiative holds annual competitions
